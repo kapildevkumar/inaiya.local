@@ -422,6 +422,71 @@ function updateMetaTags() {
     metaTheme.content = '#FFEAE3';
 }
 
+/**
+ * Renders the Sidebar (Desktop) and Bottom Bar (Mobile)
+ * Aligned with Supabase version visuals.
+ */
+function renderNav() {
+    const page = window.location.hash.substring(1) || 'home';
+
+    // 1. Desktop Sidebar
+    if (desktopNavContainer) {
+        desktopNavContainer.innerHTML = navLinks.map(link => `
+            <a href="#${link.id}" 
+               class="nav-item flex items-center px-6 py-4 transition-all duration-200 cursor-pointer 
+               ${page === link.id ? 'active text-primary bg-white shadow-md border-r-4 border-primary' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'}">
+                <i class="${link.icon} w-8 text-center text-lg mr-3"></i>
+                <span class="font-medium tracking-wide">${link.text}</span>
+            </a>
+        `).join('');
+    }
+
+    // 2. Mobile Bottom Nav
+    if (mobileNavContainer) {
+        mobileNavContainer.innerHTML = navLinks.map(link => `
+            <a href="#${link.id}" 
+               class="mobile-nav-item flex flex-col items-center justify-center w-full h-full py-1 cursor-pointer 
+               ${page === link.id ? 'active text-primary' : 'text-gray-400'}">
+                <i class="${link.icon} text-xl mb-1"></i>
+                <span class="text-[10px] font-medium">${link.text}</span>
+            </a>
+        `).join('');
+    }
+
+    // 3. Update Sidebar Profile (Photo & Name)
+    if (siteData.homepage) {
+        if (sidebarPhoto) sidebarPhoto.src = siteData.homepage.mainImage || 'https://placehold.co/150';
+        if (sidebarName) sidebarName.textContent = window.SITE_CONFIG?.SpouseName || 'My Love';
+        if (sidebarTag) sidebarTag.textContent = siteData.homepage.relationshipTag || 'My Person';
+    }
+}
+
+/**
+ * Master Render Function
+ * orchestrates the UI updates when data changes or navigation happens.
+ */
+function renderAll() {
+    // 1. Render Navigation (Fixes the missing sidebar)
+    renderNav();
+
+    // 2. Determine Current Page
+    const page = window.location.hash.substring(1) || 'home';
+    
+    // 3. Render Main Content Area (Delegates to render.js)
+    const contentHtml = renderContent(page, navLinks);
+    mainContent.innerHTML = contentHtml;
+
+    // 4. Initialize specific interactive modules if needed
+    if (page === 'journey') {
+        renderTimelineList();
+        renderCalendar(currentCalendarDate);
+    }
+    
+    // 5. Re-apply scroll to top
+    window.scrollTo(0, 0);
+}
+
+
 function spinWheel() {
     const result = document.getElementById('wheel-result');
     const btn = document.getElementById('spin-btn');
