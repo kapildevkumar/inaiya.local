@@ -3,7 +3,6 @@
   "short_name": "Inaiya",
   "description": "A private, local-first digital scrapbook for preserving our shared memories, photos, and milestones.",
   "start_url": ".",
-  "scope": "./",
   "display": "standalone",
   "background_color": "#FFF8F0",
   "theme_color": "#E8A0BF",
