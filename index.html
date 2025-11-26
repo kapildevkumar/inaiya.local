@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#E8A0BF">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="description" content="A private space for our memories.">
+    <title>Inaiya</title>
+
+    <link rel="manifest" href="manifest.json">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Lato:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.8/purify.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/browser-image-compression@2.0.2/dist/browser-image-compression.js"></script>
+    
+    <link rel="stylesheet" href="styles.css">
+    
+    <script src="./secret/config.js"></script>
+    
+    <style>
+        body { opacity: 0; transition: opacity 0.3s ease-in-out; }
+        body.loaded { opacity: 1; }
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body class="text-slate-800">
+
+    <div id="login-overlay" class="fixed inset-0 bg-white z-[60] flex items-center justify-center p-4" style="background-color: var(--bg-light);">
+        <div class="w-full max-w-sm text-center">
+            <div class="mb-6 relative inline-block">
+                <i class="fas fa-heart text-5xl text-primary animate-pulse"></i>
+            </div>
+            <h2 class="text-3xl font-bold mb-2 font-serif">Inaiya</h2>
+            <p class="mb-8 text-gray-600">Your private, offline memory book.</p>
+            
+            <button id="login-btn" class="btn btn-primary w-full shadow-lg text-lg py-3">
+                <i class="fas fa-book-open mr-2"></i> Open Journal
+            </button>
+            <p id="login-msg" class="text-sm mt-4 text-gray-400">Data is stored locally on this device.</p>
+        </div>
+    </div>
+
+    <div id="password-overlay" class="fixed inset-0 bg-white z-50 flex items-center justify-center p-4 hidden" style="background-color: var(--bg-light);">
+        <div class="w-full max-w-sm text-center">
+            <i class="fas fa-lock text-4xl mb-4 text-primary"></i>
+            <h2 class="text-2xl font-bold mb-4">Secret Passcode</h2>
+            <input type="password" id="password-input" class="form-input text-center mb-4" placeholder="Enter PIN">
+            <button id="password-submit" class="btn btn-primary w-full">Unlock</button>
+            <p id="password-error" class="text-red-500 text-sm mt-2 hidden">Incorrect password.</p>
+        </div>
+    </div>
+
+    <div id="app-container" class="max-w-7xl mx-auto p-4 md:p-4 pb-24 md:pb-4 hidden">
+        <div class="flex flex-col md:flex-row md:space-x-8">
+            
+            <aside id="sidebar" class="hidden md:block w-full md:w-72">
+                <nav id="sidebar-nav" class="sticky top-4 bg-white/80 backdrop-blur-md rounded-2xl shadow-lg p-6 border border-white/50">
+                    <div class="text-center mb-8">
+                        <img id="sidebar-spouse-photo" src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" alt="Cover Photo" class="w-24 h-24 rounded-full mx-auto object-cover shadow-md border-4 border-white">
+                        <h2 id="sidebar-spouse-name" class="mt-4 text-2xl font-bold">Loading...</h2>
+                        <p id="sidebar-spouse-tag" class="text-sm" style="color: var(--text-light);">For You</p>
+                    </div>
+                    <div id="desktop-nav-items" class="space-y-2"></div>
+                    <div class="mt-8 pt-6 border-t border-gray-100">
+                        <button onclick="window.app.logout()" class="w-full text-sm text-gray-400 hover:text-red-500 transition-colors">
+                            <i class="fas fa-lock"></i> Lock App
+                        </button>
+                    </div>
+                </nav>
+            </aside>
+
+            <main id="main-content" class="flex-1 p-0 min-h-[80vh]">
+                </main>
+        </div>
+    </div>
+
+    <nav id="mobile-nav" class="md:hidden fixed bottom-0 left-0 right-0 h-20 shadow-[0_-5px_15px_rgba(0,0,0,0.05)] z-30 hidden glass-effect">
+        <div id="mobile-nav-items" class="flex items-center h-full overflow-x-auto px-2 no-scrollbar">
+            </div>
+    </nav>
+
+    <div id="modal-container" aria-hidden="true">
+        <div id="form-modal-backdrop" class="modal-backdrop" tabindex="-1"></div>
+        <div id="alert-modal-backdrop" class="modal-backdrop" style="align-items: center; justify-content: center;" tabindex="-1"></div>
+    </div>
+    
+    <div id="image-modal-backdrop" class="image-modal-backdrop" onclick="window.app.closeImageModal()">
+        <div class="image-modal-content" onclick="event.stopPropagation()">
+            <button class="image-modal-close" onclick="window.app.closeImageModal()" aria-label="Close Gallery">
+                <i class="fas fa-times"></i>
+            </button>
+            
+            <button class="image-modal-nav image-modal-prev" onclick="window.app.navGallery(-1)" aria-label="Previous Image"><i class="fas fa-chevron-left"></i></button>
+            <button class="image-modal-nav image-modal-next" onclick="window.app.navGallery(1)" aria-label="Next Image"><i class="fas fa-chevron-right"></i></button>
+            
+            <img id="modal-image" src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" alt="" class="image-modal-img">            
+            <div class="flex items-center gap-4 mt-4 w-full justify-center">
+                 <div id="modal-caption" class="image-modal-caption flex-1 text-center font-medium"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script type="module" src="main.js"></script>
+</body>
+</html>
