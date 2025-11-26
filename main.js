@@ -508,7 +508,7 @@ function getModalContent(pageId, index, context) {
     }
     else if (pageId === 'wheel') { title = 'Edit Wheel'; fields = `<div class="mb-4"><label class="block text-sm font-bold mb-1 text-gray-700" for="wheel-items">Items (Comma separated)</label><textarea id="wheel-items" class="form-input h-24">${(siteData.surprise.wheelItems || []).join(', ')}</textarea></div>`; }
     else if (pageId === 'playlist') { if(context === 'intro') { title = 'Edit Intro'; fields = textarea('intro', 'Intro', siteData.playlist.intro); } else { const song = !isNew ? siteData.playlist.songs[index] : {}; title = 'Edit Song'; fields = input('title', 'Title', song.title||'') + input('embed', 'YouTube URL', song.embedId||'') + textarea('note', 'Note', song.note||''); } }
-    else if (pageId === 'promises') { if(context==='intro') { title='Edit Intro'; fields=textarea('intro', 'Intro', siteData.promises.intro); } else { title='Promise'; fields=textarea('promise', 'Promise', !isNew ? siteData.promises.promises.push(val('promise')) : siteData.promises.promises[index]); } }
+    else if (pageId === 'promises') { if(context==='intro') { title='Edit Intro'; fields=textarea('intro', 'Intro', siteData.promises.intro); } else { title='Promise'; fields=textarea('promise', 'Promise', !isNew ? siteData.promises.promises[index] : '')} }
     
     else if (pageId === 'allMyLove') {
         if (context === 'intro') {
@@ -696,7 +696,7 @@ window.app = {
             }
 
             // Update State
-            setSiteData(deepMerge(siteData, importedData.siteData));
+            setSiteData(deepMerge({...siteData}, importedData.siteData))
             await saveData(false, showCustomAlert);
 
             showCustomAlert('Import Successful', 'Data imported successfully!', true);
