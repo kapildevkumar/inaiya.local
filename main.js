@@ -58,22 +58,39 @@ const navLinks = [
 async function init() {
   console.log("Initializing Local PWA...");
   
+  // Theme
   const savedTheme = localStorage.getItem('app_theme') || (window.SITE_CONFIG ? window.SITE_CONFIG.theme : 'default');
   if (savedTheme && THEMES[savedTheme]) {
     applyThemeInternal(savedTheme);
   }
   
+  // Network listeners
   window.addEventListener('offline', () => showCustomAlert("Connection Lost", "You are offline (Local mode active).", true));
   window.addEventListener('online', () => showCustomAlert("Back Online", "Connection restored.", true));
+  
+  // Hash routing
   window.addEventListener('hashchange', () => {
     const page = window.location.hash.substring(1);
     const validPage = navLinks.find(l => l.id === page) ? page : 'home';
     navigateTo(validPage);
   });
 
-  // AUTO-LOGIN for Local PWA
-  loginOverlay.classList.add('hidden'); // Hide immediately
+  // EMERGENCY FIX: Always add 'loaded' class after a short delay
+  setTimeout(() => {
+    document.body.classList.add('loaded');
+  }, 100);
+
+  // Check session
+  if (sessionStorage.getItem('inaiya_session')) {
+    // Already has session, proceed
+    handleAuthenticatedState();
+  } else {
+    // Show login
+    loginOverlay.classList.remove('hidden');
+    document.body.classList.add('loaded'); // Ensure login shows
+  }
   
+  // Setup auth callbacks
   initAuth(
     (session) => {
       if (!isProcessingAuth) {
@@ -85,15 +102,6 @@ async function init() {
       window.location.reload();
     }
   );
-
-  // FIXED: Check if session exists
-  if (!sessionStorage.getItem('inaiya_session')) {
-    loginOverlay.classList.remove('hidden');
-    // DON'T add 'loaded' class here - wait for authentication
-  } else {
-    // Session exists, proceed with authentication
-    handleAuthenticatedState();
-  }
 }
 
 
@@ -107,7 +115,11 @@ function applyThemeInternal(themeKey) {
     localStorage.setItem('app_theme', themeKey);
 }
 
+
 async function handleAuthenticatedState() {
+  console.log('Authentication successful');
+  
+  // Hide overlays
   loginOverlay.classList.add('hidden');
   
   // Check for App Password
@@ -115,13 +127,14 @@ async function handleAuthenticatedState() {
   if (!isPassOk && window.SITE_CONFIG?.appPasswordHash) {
     passwordOverlay.classList.remove('hidden');
     passwordOverlay.style.display = 'flex';
+    document.body.classList.add('loaded'); // Ensure password screen shows
     await promptForAppPassword();
   }
   
   passwordOverlay.classList.add('hidden');
   passwordOverlay.style.display = 'none';
   
-  // FIXED: Show containers BEFORE loading data
+  // Show app containers
   appContainer.classList.remove('hidden');
   mobileNav.classList.remove('hidden');
   
@@ -129,38 +142,16 @@ async function handleAuthenticatedState() {
     document.body.classList.add('is-editing');
   }
   
+  // Ensure screen is visible
+  document.body.classList.add('loaded');
+  
   try {
     await loadData();
-    renderAll(); // This calls buildNavigation()
+    renderAll();
   } catch(e) {
     console.error('Data load error:', e);
     renderErrorState(e);
   }
-  
-  // FIXED: Add loaded class AFTER everything is rendered
-  document.body.classList.add('loaded');
-}
-
-function renderErrorState(error) {
-  console.error("Full Data Load Error:", error);
-  
-  // FIXED: Still build navigation even on error
-  buildNavigation();
-  
-  mainContent.innerHTML = `
-    <div class="flex flex-col items-center justify-center h-96 text-center p-6">
-      <i class="fas fa-exclamation-circle text-6xl text-red-300 mb-4"></i>
-      <h2 class="text-2xl font-bold text-gray-600 mb-2">Database Error</h2>
-      <p class="text-gray-500 max-w-md">Could not load local data. ${error.message}</p>
-      <button onclick="window.app.retryLoad()" class="mt-6 btn btn-primary px-6">Retry</button>
-      <button onclick="window.app.emergencyReset()" class="mt-4 text-sm text-red-400 underline">Reset Database</button>
-    </div>
-  `;
-  
-  // Ensure containers are visible
-  appContainer.classList.remove('hidden');
-  mobileNav.classList.remove('hidden');
-  document.body.classList.add('loaded');
 }
 
 
