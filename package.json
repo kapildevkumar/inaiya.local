@@ -10,10 +10,15 @@
   "repository": {
     "type": "git"
   },
-  "keywords": ["pwa", "local-first", "indexeddb"],
+  "keywords": [
+    "pwa",
+    "local-first",
+    "indexeddb"
+  ],
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@parcel/transformer-webmanifest": "^2.16.1",
     "autoprefixer": "^10.4.22",
     "parcel": "^2.16.1",
     "postcss": "^8.5.6",
