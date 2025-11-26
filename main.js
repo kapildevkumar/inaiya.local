@@ -56,43 +56,46 @@ const navLinks = [
 ];
 
 async function init() {
-    console.log("Initializing Local PWA...");
+  console.log("Initializing Local PWA...");
+  
+  const savedTheme = localStorage.getItem('app_theme') || (window.SITE_CONFIG ? window.SITE_CONFIG.theme : 'default');
+  if (savedTheme && THEMES[savedTheme]) {
+    applyThemeInternal(savedTheme);
+  }
+  
+  window.addEventListener('offline', () => showCustomAlert("Connection Lost", "You are offline (Local mode active).", true));
+  window.addEventListener('online', () => showCustomAlert("Back Online", "Connection restored.", true));
+  window.addEventListener('hashchange', () => {
+    const page = window.location.hash.substring(1);
+    const validPage = navLinks.find(l => l.id === page) ? page : 'home';
+    navigateTo(validPage);
+  });
 
-    const savedTheme = localStorage.getItem('app_theme') || (window.SITE_CONFIG ? window.SITE_CONFIG.theme : 'default');
-    if (savedTheme && THEMES[savedTheme]) {
-        applyThemeInternal(savedTheme);
+  // AUTO-LOGIN for Local PWA
+  loginOverlay.classList.add('hidden'); // Hide immediately
+  
+  initAuth(
+    (session) => {
+      if (!isProcessingAuth) {
+        isProcessingAuth = true;
+        handleAuthenticatedState();
+      }
+    },
+    () => {
+      window.location.reload();
     }
+  );
 
-    window.addEventListener('offline', () => showCustomAlert("Connection Lost", "You are offline (Local mode active).", true));
-    window.addEventListener('online', () => showCustomAlert("Back Online", "Connection restored.", true));
-
-    window.addEventListener('hashchange', () => {
-        const page = window.location.hash.substring(1);
-        const validPage = navLinks.find(l => l.id === page) ? page : 'home';
-        navigateTo(validPage);
-    });
-
-    // AUTO-LOGIN for Local PWA
-    loginOverlay.classList.add('hidden'); 
-
-    initAuth(
-        (session) => {
-            if (!isProcessingAuth) {
-                isProcessingAuth = true;
-                handleAuthenticatedState();
-            }
-        },
-        () => {
-            window.location.reload();
-        }
-    );
-
-    // If no session exists, we must reveal the login screen manually
-    if (!sessionStorage.getItem('inaiya_session')) {
-        loginOverlay.classList.remove('hidden');
-        document.body.classList.add('loaded'); // <--- CRITICAL FIX
-    }
+  // FIXED: Check if session exists
+  if (!sessionStorage.getItem('inaiya_session')) {
+    loginOverlay.classList.remove('hidden');
+    // DON'T add 'loaded' class here - wait for authentication
+  } else {
+    // Session exists, proceed with authentication
+    handleAuthenticatedState();
+  }
 }
+
 
 function applyThemeInternal(themeKey) {
     const theme = THEMES[themeKey];
@@ -105,90 +108,124 @@ function applyThemeInternal(themeKey) {
 }
 
 async function handleAuthenticatedState() {
-    loginOverlay.classList.add('hidden');
-    
-    // Check for App Password
-    const isPassOk = sessionStorage.getItem('isAppAuthenticated') === 'true';
-    if (!isPassOk && window.SITE_CONFIG?.appPasswordHash) {
-        passwordOverlay.classList.remove('hidden');
-        passwordOverlay.style.display = 'flex';
-        document.body.classList.add('loaded');
-        await promptForAppPassword();
-    }
-
-    passwordOverlay.classList.add('hidden');
-    passwordOverlay.style.display = 'none';
-    appContainer.classList.remove('hidden');
-    mobileNav.classList.remove('hidden');
-
-    if (localStorage.getItem('app_edit_mode') === 'true') {
-        document.body.classList.add('is-editing');
-    }
-
-    try {
-        await loadData();
-        renderAll();
-    } catch(e) {
-        renderErrorState(e); 
-    }
-    document.body.classList.add('loaded');
+  loginOverlay.classList.add('hidden');
+  
+  // Check for App Password
+  const isPassOk = sessionStorage.getItem('isAppAuthenticated') === 'true';
+  if (!isPassOk && window.SITE_CONFIG?.appPasswordHash) {
+    passwordOverlay.classList.remove('hidden');
+    passwordOverlay.style.display = 'flex';
+    await promptForAppPassword();
+  }
+  
+  passwordOverlay.classList.add('hidden');
+  passwordOverlay.style.display = 'none';
+  
+  // FIXED: Show containers BEFORE loading data
+  appContainer.classList.remove('hidden');
+  mobileNav.classList.remove('hidden');
+  
+  if (localStorage.getItem('app_edit_mode') === 'true') {
+    document.body.classList.add('is-editing');
+  }
+  
+  try {
+    await loadData();
+    renderAll(); // This calls buildNavigation()
+  } catch(e) {
+    console.error('Data load error:', e);
+    renderErrorState(e);
+  }
+  
+  // FIXED: Add loaded class AFTER everything is rendered
+  document.body.classList.add('loaded');
 }
 
 function renderErrorState(error) {
-    console.error("Full Data Load Error:", error);
-    mainContent.innerHTML = `
-        <div class="flex flex-col items-center justify-center h-96 text-center p-6">
-            <i class="fas fa-exclamation-circle text-6xl text-red-300 mb-4"></i>
-            <h2 class="text-2xl font-bold text-gray-600 mb-2">Database Error</h2>
-            <p class="text-gray-500 max-w-md">Could not load local data. ${error.message}</p>
-            <button onclick="window.app.retryLoad()" class="mt-6 btn btn-primary px-6">Retry</button>
-            <button onclick="window.app.emergencyReset()" class="mt-4 text-sm text-red-400 underline">Reset Database</button>
-        </div>
-    `;
+  console.error("Full Data Load Error:", error);
+  
+  // FIXED: Still build navigation even on error
+  buildNavigation();
+  
+  mainContent.innerHTML = `
+    <div class="flex flex-col items-center justify-center h-96 text-center p-6">
+      <i class="fas fa-exclamation-circle text-6xl text-red-300 mb-4"></i>
+      <h2 class="text-2xl font-bold text-gray-600 mb-2">Database Error</h2>
+      <p class="text-gray-500 max-w-md">Could not load local data. ${error.message}</p>
+      <button onclick="window.app.retryLoad()" class="mt-6 btn btn-primary px-6">Retry</button>
+      <button onclick="window.app.emergencyReset()" class="mt-4 text-sm text-red-400 underline">Reset Database</button>
+    </div>
+  `;
+  
+  // Ensure containers are visible
+  appContainer.classList.remove('hidden');
+  mobileNav.classList.remove('hidden');
+  document.body.classList.add('loaded');
 }
 
+
 function renderAll() {
-    // Sync Sidebar
-    sidebarPhoto.src = siteData.homepage.mainImage || 'https://placehold.co/100x100';
-    sidebarName.textContent = window.SITE_CONFIG?.SpouseName || 'My Love';
-    if(sidebarTag) sidebarTag.textContent = siteData.homepage.relationshipTag || 'For You';
-    
-    updateMetaTags();
-    buildNavigation();
-    
-    mainContent.innerHTML = navLinks.map(link => `<div id="${link.id}" class="content-section" role="tabpanel" aria-labelledby="nav-${link.id}"></div>`).join('');
-    
-    const initialPage = window.location.hash.substring(1) || 'home';
-    navigateTo(initialPage);
+  // 1. Sync Sidebar
+  sidebarPhoto.src = siteData.homepage.mainImage || 'https://placehold.co/100x100';
+  sidebarName.textContent = window.SITE_CONFIG?.SpouseName || 'My Love';
+  if(sidebarTag) sidebarTag.textContent = siteData.homepage.relationshipTag || 'For You';
+  
+  updateMetaTags();
+  
+  // 2. CRITICAL: Build navigation
+  buildNavigation();
+  
+  // 3. Container setup
+  mainContent.innerHTML = navLinks.map(link => 
+    `<div id="${link.id}" class="content-section" role="tabpanel" aria-labelledby="nav-${link.id}"></div>`
+  ).join('');
+  
+  // 4. Route to initial page
+  const initialPage = window.location.hash.substring(1) || 'home';
+  navigateTo(initialPage);
 }
 
 function buildNavigation() {
-    if (!desktopNavContainer || !mobileNavContainer) return;
-
-    desktopNavContainer.innerHTML = ''; 
-    mobileNavContainer.innerHTML = ''; 
-
-    navLinks.forEach(link => {
-        // Desktop Link
-        const a = document.createElement('a');
-        a.href = "#" + link.id;
-        a.id = `nav-${link.id}`;
-        a.className = "nav-item block font-bold text-slate-600 rounded-lg p-3 transition-colors focus:outline-none focus:ring-2 focus:ring-primary";
-        a.dataset.page = link.id;
-        a.innerHTML = `<i class="${link.icon} w-6 mr-2 text-center"></i> ${link.text}`;
-        a.onclick = (e) => { e.preventDefault(); navigateTo(link.id); }; 
-        desktopNavContainer.appendChild(a);
-
-        // Mobile Link
-        const ma = document.createElement('a');
-        ma.href = "#" + link.id;
-        ma.className = "mobile-nav-item flex flex-col items-center justify-center h-full focus:outline-none";
-        ma.dataset.page = link.id;
-        ma.innerHTML = `<i class="${link.icon}"></i><span>${link.text}</span>`;
-        ma.onclick = (e) => { e.preventDefault(); navigateTo(link.id); }; 
-        mobileNavContainer.appendChild(ma);
-    });
+  // FIXED: Add null checks
+  if (!desktopNavContainer || !mobileNavContainer) {
+    console.error('Navigation containers not found in DOM');
+    return;
+  }
+  
+  desktopNavContainer.innerHTML = '';
+  mobileNavContainer.innerHTML = '';
+  
+  navLinks.forEach(link => {
+    // Desktop Link
+    const a = document.createElement('a');
+    a.href = `#${link.id}`;
+    a.id = `nav-${link.id}`;
+    a.className = 'nav-item block font-bold text-slate-600 rounded-lg p-3 transition-colors focus:outline-none focus:ring-2 focus:ring-primary';
+    a.dataset.page = link.id;
+    a.setAttribute('role', 'tab');
+    a.innerHTML = `<i class="${link.icon} w-6 mr-2 text-center"></i> ${link.text}`;
+    a.onclick = (e) => {
+      e.preventDefault();
+      navigateTo(link.id);
+    };
+    desktopNavContainer.appendChild(a);
+    
+    // Mobile Link
+    const ma = document.createElement('a');
+    ma.href = `#${link.id}`;
+    ma.className = 'mobile-nav-item flex flex-col items-center justify-center h-full focus:outline-none';
+    ma.dataset.page = link.id;
+    ma.innerHTML = `<i class="${link.icon}"></i><span>${link.text}</span>`;
+    ma.onclick = (e) => {
+      e.preventDefault();
+      navigateTo(link.id);
+    };
+    mobileNavContainer.appendChild(ma);
+  });
+  
+  console.log('Navigation built successfully');
 }
+
 
 function navigateTo(pageId) {
     if (!navLinks.find(l => l.id === pageId)) return;
