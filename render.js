@@ -1,9 +1,12 @@
 // render.js
 /**
  * ============================================================================
- * VIEW CONTROLLER / RENDER ENGINE
+ * VIEW CONTROLLER / RENDER ENGINE (Local PWA Version)
  * ============================================================================
- * Updated for Local Storage: Removed server-side image resizing parameters.
+ * Handles generating HTML markup from the local data state.
+ * * CHANGES FROM CLOUD VERSION:
+ * - Removed Supabase Image Transformation parameters (e.g., ?width=500).
+ * Local Blob URLs (blob:http://...) do not support query parameters.
  */
 
 import { siteData } from './data.js';
@@ -73,7 +76,7 @@ export function renderContent(pageId, navLinks) {
 }
 
 // ==========================================
-// SUB-RENDERERS (PAGE-SPECIFIC)
+// SUB-RENDERERS
 // ==========================================
 
 function renderHomepage() {
@@ -96,7 +99,7 @@ function renderHomepage() {
     });
 
   if (todaysEvents.some(e => e.title.toLowerCase().includes('birthday'))) {
-    title = `<h1 class="text-4xl md:text-5xl font-bold mb-2 text-primary">ðŸŽ‰ Happy Birthday, ${sanitize(SpouseName)}! ðŸŽ‰</h1>`;
+    title = `<h1 class="text-4xl md:text-5xl font-bold mb-2 text-primary">🎉 Happy Birthday, ${sanitize(SpouseName)}! 🎉</h1>`;
   }
 
   const mobileHeader = `
@@ -120,7 +123,7 @@ function renderHomepage() {
         <p class="text-lg leading-relaxed whitespace-pre-wrap">${sanitize(homepage.introMessage)}</p>
       </div>
       <div class="my-8 p-4 bg-soft rounded-xl inline-block max-w-full">
-        <h4 class="text-lg font-bold mb-2 text-primary">â³ Relationship Clock</h4>
+        <h4 class="text-lg font-bold mb-2 text-primary">⏳ Relationship Clock</h4>
         <div id="relationship-timer" class="text-xl md:text-3xl font-bold text-slate-700 flex flex-wrap justify-center items-center gap-x-4 gap-y-1" aria-live="polite">Loading...</div>
         <div class="edit-mode-only mt-2"><button onclick="window.app.openModal('home', -1, 'timer')" class="text-xs underline text-gray-500">Edit Start Date</button></div>
       </div>
@@ -133,12 +136,11 @@ function renderGallery() {
 
   const slideshowBtn = `<div class="w-full flex justify-end mb-4"><button onclick="window.app.startSlideshowFromPage()" class="btn btn-primary shadow-md"><i class="fas fa-play mr-2"></i>Play Slideshow</button></div>`;
 
-  // FIXED: Removed query parameters (?width=...) from image src. 
-  // Base64 Data URIs do not support query parameters and will break if they are present.
   return slideshowBtn + `<div class="grid grid-cols-1 md:grid-cols-3 gap-6">${
     siteData.photoGallery.map((p, i) => `
       <div class="rounded-xl shadow-lg overflow-hidden group relative bg-white">
         <button type="button" class="w-full p-0 border-0 cursor-pointer" onclick="window.app.openImageModal(${i})">
+          <!-- NOTE: No resizing params here. Used p.image directly for Blob URL support -->
           <img src="${p.image}" loading="lazy" class="w-full h-60 object-cover" alt="${sanitize(p.caption)}">
         </button>
         <div class="absolute top-2 right-2 flex space-x-1 edit-mode-only">
@@ -214,14 +216,14 @@ function renderSurprise() {
 
   return `
     <div class="text-center">
-      <div class="text-5xl mb-4">ðŸŽ</div>
+      <div class="text-5xl mb-4">🎁</div>
       <h2 class="text-3xl md:text-4xl font-bold mb-4 text-primary">${sanitize(siteData.surprise.title)}</h2>
       <p class="text-lg mb-6 break-words text-gray-600">${sanitize(siteData.surprise.message)}</p>
       ${siteData.surprise.image ? `<img src="${siteData.surprise.image}" class="rounded-lg max-w-full md:max-w-md mx-auto shadow-lg mb-8" alt="Surprise">` : ''}
 
       <!-- Spin Wheel Section -->
       <div class="mt-8 p-6 bg-soft rounded-xl border border-pink-100">
-        <h3 class="text-2xl font-bold mb-6 text-slate-700 text-center"> Let's play - Spin the wheel ðŸŽ²</h3>
+        <h3 class="text-2xl font-bold mb-6 text-slate-700 text-center"> Let's play - Spin the wheel 🎲</h3>
         <div class="wheel-container">
           <div class="wheel-arrow"></div>
           <div id="the-wheel" class="wheel" style="background: ${gradient}"></div>
@@ -236,7 +238,7 @@ function renderSurprise() {
 
 function renderAllMyLovePage() {
   return `<div>
-    <h3 class="text-xl font-bold mb-4">ðŸ’• The Ways I Love You</h3>
+    <h3 class="text-xl font-bold mb-4">💖 The Ways I Love You</h3>
     <p class="mb-6 text-gray-600">${sanitize(siteData.loveLanguages.intro)}</p>
     <div class="grid gap-4 mb-10">${
       siteData.loveLanguages.languages.map((l,i) => `
@@ -256,7 +258,7 @@ function renderAllMyLovePage() {
 
     <div class="border-t pt-6">
       <div class="flex items-center gap-2 mb-4">
-        <h3 class="text-xl font-bold">ðŸ’– A Few Reasons Why</h3>
+        <h3 class="text-xl font-bold">💘 A Few Reasons Why</h3>
         <button type="button" class="btn-icon text-base edit-mode-only" onclick="window.app.openModal('allMyLove', -1, 'loveReasonsIntro')" aria-label="Edit Introduction"><i class="fas fa-edit"></i></button>
       </div>
       <p class="mb-6 text-gray-600">${sanitize(siteData.loveReasons.intro)}</p>
@@ -286,7 +288,7 @@ function renderMemoriesAndNotesPage() {
   `).join('');
 
   return `<div>
-    <h3 class="text-xl font-bold mb-4">ðŸ“– Times Together</h3>
+    <h3 class="text-xl font-bold mb-4">📖 Times Together</h3>
     <div class="space-y-4 mb-10">${
       siteData.memoryBook.map((m, i) => `
         <div class="p-4 bg-soft border-l-4 border-primary rounded relative">
@@ -301,7 +303,7 @@ function renderMemoriesAndNotesPage() {
     }</div>
 
     <div class="border-t pt-8">
-      <h3 class="text-xl font-bold mb-4">ðŸ“ Our Notepad</h3>
+      <h3 class="text-xl font-bold mb-4">📝 Our Notepad</h3>
       <div class="flex gap-2 mb-4 edit-mode-only">
         <input type="text" id="new-note-input" class="form-input flex-1" placeholder="Add a to-do...">
         <button id="add-note-btn" class="btn btn-primary">Add</button>
@@ -312,16 +314,6 @@ function renderMemoriesAndNotesPage() {
 }
 
 function renderBucketListPage() {
-  const wheelColors = ['#FFD1DC', '#E0F2FE', '#D1FAE5', '#FEF3C7', '#F3E8FF'];
-  const wheelItems = siteData.surprise?.wheelItems || [];  
-  const sliceDeg = 360 / wheelItems.length;
-  let gradient = 'conic-gradient(';
-  wheelItems.forEach((_, i) => {
-    const color = wheelColors[i % wheelColors.length];
-    gradient += `${color} ${i * sliceDeg}deg ${(i + 1) * sliceDeg}deg, `;
-  });
-  gradient = gradient.slice(0, -1);
-
   return `
     <p class="mb-8 text-gray-600">${sanitize(siteData.bucketList.intro)}</p>
     <div class="space-y-4 mb-12">${
@@ -359,16 +351,16 @@ function renderSettingsPage() {
   const isEditMode = localStorage.getItem('app_edit_mode') === 'true';
 
   const themeOptions = {
-    'default': { primary: '#FFEAE3', border: 'border-pink-200', name: 'Rose ðŸŒ¹' },
-    'ocean': { primary: '#E0F2FE', border: 'border-blue-200', name: 'Ocean ðŸŒŠ' },
-    'nature': { primary: '#ECFCCB', border: 'border-green-200', name: 'Nature ðŸŒ¿' },
-    'lavender': { primary: '#F3E8FF', border: 'border-purple-200', name: 'Lavender ðŸ’œ' },
-    'cherry': { primary: '#FFE4E6', border: 'border-red-200', name: 'Cherry ðŸ’' },
-    'sunshine': { primary: '#FEF9C3', border: 'border-yellow-200', name: 'Sunshine â˜€ï¸' },
-    'coral': { primary: '#FFEDD5', border: 'border-orange-200', name: 'Coral ðŸ§¡' },
-    'teal': { primary: '#CCFBF1', border: 'border-teal-200', name: 'Teal ðŸ’š' },
-    'mocha': { primary: '#E7E5E4', border: 'border-stone-200', name: 'Mocha â˜•' },
-    'berry': { primary: '#FCE7F3', border: 'border-pink-300', name: 'Berry ðŸ«' }
+    'default': { primary: '#FFEAE3', border: 'border-pink-200', name: 'Rose 🌹' },
+    'ocean': { primary: '#E0F2FE', border: 'border-blue-200', name: 'Ocean 🌊' },
+    'nature': { primary: '#ECFCCB', border: 'border-green-200', name: 'Nature 🌿' },
+    'lavender': { primary: '#F3E8FF', border: 'border-purple-200', name: 'Lavender 💜' },
+    'cherry': { primary: '#FFE4E6', border: 'border-red-200', name: 'Cherry 🍒' },
+    'sunshine': { primary: '#FEF9C3', border: 'border-yellow-200', name: 'Sunshine ☀️' },
+    'coral': { primary: '#FFEDD5', border: 'border-orange-200', name: 'Coral 🧡' },
+    'teal': { primary: '#CCFBF1', border: 'border-teal-200', name: 'Teal 💚' },
+    'mocha': { primary: '#E7E5E4', border: 'border-stone-200', name: 'Mocha ☕' },
+    'berry': { primary: '#FCE7F3', border: 'border-pink-300', name: 'Berry 🍷' }
   };
 
   const themeCircles = Object.entries(themeOptions).map(([key, { primary, border, name }]) => {
@@ -384,7 +376,7 @@ function renderSettingsPage() {
 
   const toggleBgClass = isEditMode ? 'peer-checked:bg-green-500 bg-red-500' : 'peer-checked:bg-green-500 bg-red-500';
   const toggleInitialClass = isEditMode ? 'bg-green-500' : 'bg-red-500';
-  const toggleText = isEditMode ? 'ðŸ”‘ Enabled' : 'ðŸ”’ Disabled';
+  const toggleText = isEditMode ? '🔓 Enabled' : '🔒 Disabled';
 
   return `
     <div class="space-y-8">

@@ -1,10 +1,9 @@
 // generate-config.js
 /**
- * BUILD SCRIPT: Configuration Generator (Local PWA)
+ * BUILD SCRIPT: Configuration Generator (Local PWA Version)
  * ------------------------------------------------------------------
  * Extracts environment variables for the Local PWA.
  * Unlike the Cloud version, this does NOT inject Supabase keys.
- * * Usage: node generate-config.js
  */
 
 const fs = require('fs');

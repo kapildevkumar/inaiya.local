@@ -129,38 +129,28 @@ async function handleAuthenticatedState() {
         await loadData();
         renderAll();
     } catch(e) {
-        // PASS 'e' TO THE FUNCTION
         renderErrorState(e); 
     }
     document.body.classList.add('loaded');
 }
 
-// main.js
-/**
- * Error State Renderer
- * --------------------
- * Replaces main content with a user-friendly error message if data loading fails.
- * Aligned with Supabase version to hide stack traces from the user UI.
- */
 function renderErrorState(error) {
-    // Log the full error to the console for debugging (PWA specific requirement)
     console.error("Full Data Load Error:", error);
-
     mainContent.innerHTML = `
         <div class="flex flex-col items-center justify-center h-96 text-center p-6">
-            <i class="fas fa-wifi text-6xl text-gray-300 mb-4"></i>
-            <h2 class="text-2xl font-bold text-gray-600 mb-2">Connection Error</h2>
-            <p class="text-gray-500 max-w-md">We couldn't connect to the database. Check your internet connection.</p>
-            <button onclick="window.location.reload()" class="mt-6 btn btn-primary text-white px-6 py-2 rounded-lg shadow hover:bg-opacity-90 transition">
-                Try Again
-            </button>
+            <i class="fas fa-exclamation-circle text-6xl text-red-300 mb-4"></i>
+            <h2 class="text-2xl font-bold text-gray-600 mb-2">Database Error</h2>
+            <p class="text-gray-500 max-w-md">Could not load local data. ${error.message}</p>
+            <button onclick="window.app.retryLoad()" class="mt-6 btn btn-primary px-6">Retry</button>
+            <button onclick="window.app.emergencyReset()" class="mt-4 text-sm text-red-400 underline">Reset Database</button>
         </div>
     `;
 }
 
 function renderAll() {
-    sidebarPhoto.src = siteData.homepage.mainImage || 'https://placehold.co/100x100/E8A0BF/432C39?text=Love';
-    sidebarName.textContent = siteData.SpouseName;
+    // Sync Sidebar
+    sidebarPhoto.src = siteData.homepage.mainImage || 'https://placehold.co/100x100';
+    sidebarName.textContent = window.SITE_CONFIG?.SpouseName || 'My Love';
     if(sidebarTag) sidebarTag.textContent = siteData.homepage.relationshipTag || 'For You';
     
     updateMetaTags();
@@ -173,11 +163,7 @@ function renderAll() {
 }
 
 function buildNavigation() {
-    // Safety check: ensure containers exist
-    if (!desktopNavContainer || !mobileNavContainer) {
-        console.error("Navigation containers missing in HTML");
-        return;
-    }
+    if (!desktopNavContainer || !mobileNavContainer) return;
 
     desktopNavContainer.innerHTML = ''; 
     mobileNavContainer.innerHTML = ''; 
@@ -187,11 +173,10 @@ function buildNavigation() {
         const a = document.createElement('a');
         a.href = "#" + link.id;
         a.id = `nav-${link.id}`;
-        // Use standard FontAwesome classes if emojis are breaking
         a.className = "nav-item block font-bold text-slate-600 rounded-lg p-3 transition-colors focus:outline-none focus:ring-2 focus:ring-primary";
         a.dataset.page = link.id;
         a.innerHTML = `<i class="${link.icon} w-6 mr-2 text-center"></i> ${link.text}`;
-        a.onclick = (e) => { e.preventDefault(); navigateTo(link.id); }; // Changed to call navigateTo directly
+        a.onclick = (e) => { e.preventDefault(); navigateTo(link.id); }; 
         desktopNavContainer.appendChild(a);
 
         // Mobile Link
@@ -200,7 +185,7 @@ function buildNavigation() {
         ma.className = "mobile-nav-item flex flex-col items-center justify-center h-full focus:outline-none";
         ma.dataset.page = link.id;
         ma.innerHTML = `<i class="${link.icon}"></i><span>${link.text}</span>`;
-        ma.onclick = (e) => { e.preventDefault(); navigateTo(link.id); }; // Changed to call navigateTo directly
+        ma.onclick = (e) => { e.preventDefault(); navigateTo(link.id); }; 
         mobileNavContainer.appendChild(ma);
     });
 }
@@ -281,7 +266,6 @@ async function saveEntry(pageId, index, context) {
                 }
              } else {
                 // UPDATE EXISTING PHOTO
-                // If a new file is selected, pass the FILE object, otherwise just null
                 const fileToUpdate = (fileInput && fileInput.files.length > 0) ? fileInput.files[0] : null;
                 await updatePhoto(index, val('caption'), fileToUpdate);
              }
@@ -422,70 +406,6 @@ function updateMetaTags() {
     metaTheme.content = '#FFEAE3';
 }
 
-/**
- * Renders the Sidebar (Desktop) and Bottom Bar (Mobile)
- * Aligned with Supabase version visuals.
- */
-function renderNav() {
-    const page = window.location.hash.substring(1) || 'home';
-
-    // 1. Desktop Sidebar
-    if (desktopNavContainer) {
-        desktopNavContainer.innerHTML = navLinks.map(link => `
-            <a href="#${link.id}" 
-               class="nav-item flex items-center px-6 py-4 transition-all duration-200 cursor-pointer 
-               ${page === link.id ? 'active text-primary bg-white shadow-md border-r-4 border-primary' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'}">
-                <i class="${link.icon} w-8 text-center text-lg mr-3"></i>
-                <span class="font-medium tracking-wide">${link.text}</span>
-            </a>
-        `).join('');
-    }
-
-    // 2. Mobile Bottom Nav
-    if (mobileNavContainer) {
-        mobileNavContainer.innerHTML = navLinks.map(link => `
-            <a href="#${link.id}" 
-               class="mobile-nav-item flex flex-col items-center justify-center w-full h-full py-1 cursor-pointer 
-               ${page === link.id ? 'active text-primary' : 'text-gray-400'}">
-                <i class="${link.icon} text-xl mb-1"></i>
-                <span class="text-[10px] font-medium">${link.text}</span>
-            </a>
-        `).join('');
-    }
-
-    // 3. Update Sidebar Profile (Photo & Name)
-    if (siteData.homepage) {
-        if (sidebarPhoto) sidebarPhoto.src = siteData.homepage.mainImage || 'https://placehold.co/150';
-        if (sidebarName) sidebarName.textContent = window.SITE_CONFIG?.SpouseName || 'My Love';
-        if (sidebarTag) sidebarTag.textContent = siteData.homepage.relationshipTag || 'My Person';
-    }
-}
-
-/**
- * Master Render Function
- * orchestrates the UI updates when data changes or navigation happens.
- */
-function renderAll() {
-    // 1. Render Navigation (Fixes the missing sidebar)
-    renderNav();
-
-    // 2. Determine Current Page
-    const page = window.location.hash.substring(1) || 'home';
-    
-    // 3. Render Main Content Area (Delegates to render.js)
-    const contentHtml = renderContent(page, navLinks);
-    mainContent.innerHTML = contentHtml;
-
-    // 4. Initialize specific interactive modules if needed
-    if (page === 'journey') {
-        renderTimelineList();
-        renderCalendar(currentCalendarDate);
-    }
-    
-    // 5. Re-apply scroll to top
-    window.scrollTo(0, 0);
-}
-
 
 function spinWheel() {
     const result = document.getElementById('wheel-result');
@@ -497,6 +417,7 @@ function spinWheel() {
 
     btn.disabled = true;
     
+    // Accessibility check
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
         const randomItem = items[Math.floor(Math.random() * items.length)];
         result.textContent = `✨ Let's do: ${randomItem}! ✨`;
@@ -559,7 +480,7 @@ function getModalContent(pageId, index, context) {
     }
     else if (pageId === 'wheel') { title = 'Edit Wheel'; fields = `<div class="mb-4"><label class="block text-sm font-bold mb-1 text-gray-700" for="wheel-items">Items (Comma separated)</label><textarea id="wheel-items" class="form-input h-24">${(siteData.surprise.wheelItems || []).join(', ')}</textarea></div>`; }
     else if (pageId === 'playlist') { if(context === 'intro') { title = 'Edit Intro'; fields = textarea('intro', 'Intro', siteData.playlist.intro); } else { const song = !isNew ? siteData.playlist.songs[index] : {}; title = 'Edit Song'; fields = input('title', 'Title', song.title||'') + input('embed', 'YouTube URL', song.embedId||'') + textarea('note', 'Note', song.note||''); } }
-    else if (pageId === 'promises') { if(context==='intro') { title='Edit Intro'; fields=textarea('intro', 'Intro', siteData.promises.intro); } else { title='Promise'; fields=textarea('promise', 'Promise', !isNew ? siteData.promises.promises[index] : ''); } }
+    else if (pageId === 'promises') { if(context==='intro') { title='Edit Intro'; fields=textarea('intro', 'Intro', siteData.promises.intro); } else { title='Promise'; fields=textarea('promise', 'Promise', !isNew ? siteData.promises.promises.push(val('promise')) : siteData.promises.promises[index]); } }
     
     else if (pageId === 'allMyLove') {
         if (context === 'intro') {
@@ -602,7 +523,7 @@ function showCustomAlert(title, msg, autoClose = false) { const modal = document
 function promptForAppPassword() {
     return new Promise((resolve) => {
         const input = document.getElementById('password-input');
-        const submit = document.getElementById('password-submit');
+        const form = document.getElementById('password-form');
         const error = document.getElementById('password-error');
         
         const tryLogin = async () => {
@@ -614,10 +535,11 @@ function promptForAppPassword() {
             } else { error.classList.remove('hidden'); input.value = ''; input.focus(); }
         };
         
-        const newSubmit = submit.cloneNode(true);
-        submit.parentNode.replaceChild(newSubmit, submit);
-        newSubmit.addEventListener('click', tryLogin);
-        input.onkeyup = (e) => { if (e.key === 'Enter') tryLogin(); };
+        // Use the form submit handler
+        form.onsubmit = (e) => {
+            e.preventDefault();
+            tryLogin();
+        };
     });
 }
 
@@ -773,3 +695,13 @@ window.app = {
 
 // Start the engine
 init();
+
+// --- SERVICE WORKER REGISTRATION (Moved from index.html) ---
+// Placing it here ensures 'import.meta' is available because main.js is loaded as a module.
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register(new URL('./sw.js', import.meta.url), { type: 'module' })
+            .then(reg => console.log('Service Worker Registered'))
+            .catch(err => console.log('SW Registration Failed: ', err));
+    });
+}

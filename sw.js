@@ -1,8 +1,11 @@
 /**
- * SERVICE WORKER: OFF-LINE CAPABILITY (v3.1 Production)
+ * SERVICE WORKER: OFF-LINE CAPABILITY
+ * ============================================================================
+ * Caches core assets to allow the app to load without an internet connection.
+ * Essential for the "Local PWA" experience.
  */
 
-const CACHE_NAME = 'inaiya-offline-v3-prod';
+const CACHE_NAME = 'inaiya-offline-v3-local';
 const ASSETS_TO_CACHE = [
   new URL('./index.html', import.meta.url).href,
   new URL('./styles.css', import.meta.url).href,
@@ -11,7 +14,6 @@ const ASSETS_TO_CACHE = [
   new URL('./data.js', import.meta.url).href,
   new URL('./render.js', import.meta.url).href,
   new URL('./utils.js', import.meta.url).href,
-  new URL('./manifest.json', import.meta.url).href,
   'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css',
   'https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.8/purify.min.js',
   'https://cdn.jsdelivr.net/npm/browser-image-compression@2.0.2/dist/browser-image-compression.js'
@@ -53,8 +55,8 @@ self.addEventListener('fetch', (event) => {
           return networkResponse;
         })
         .catch(() => {
-           // If network fails and no cache, we might want a fallback page
-           // but for API/Assets just return undefined to trigger offline handling in app
+           // On network failure, if content isn't cached, return undefined
+           // App handles offline state
         });
 
       return cachedResponse || fetchPromise;

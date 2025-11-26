@@ -1,31 +1,23 @@
 {
   "name": "inaiya-local",
   "version": "1.0.0",
-  "description": "A private, local-first digital scrapbook PWA using IndexedDB.",
+  "description": "Local PWA version of Inaiya. Stores data in IndexedDB.",
   "scripts": {
     "dev": "parcel index.html",
     "build": "npx tailwindcss -i input.css -o styles.css --minify && node generate-config.js && parcel build index.html --dist-dir dist --public-url ./",
     "watch": "npx tailwindcss -i input.css -o styles.css --watch"
   },
-  "repository": {
-    "type": "git"
-  },
-  "keywords": [
-    "pwa",
-    "local-first",
-    "indexeddb"
-  ],
+  "keywords": [],
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "@parcel/packager-raw-url": "^2.16.1",
-    "@parcel/transformer-webmanifest": "^2.16.1",
     "autoprefixer": "^10.4.22",
     "parcel": "^2.16.1",
     "postcss": "^8.5.6",
     "tailwindcss": "^3.4.18"
   },
   "dependencies": {
+    "@tailwindcss/vite": "^4.1.17",
     "browser-image-compression": "^2.0.2",
     "buffer": "^6.0.3",
     "dompurify": "^3.3.0"

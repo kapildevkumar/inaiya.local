@@ -61,11 +61,8 @@ function cleanupMemory() {
     activeObjectUrls = [];
 }
 
-
 /**
  * Generates the default JSON structure for the application.
- * Aligned with Supabase version (File 13) for consistent content on first load.
- * @returns {Object} The default site data object
  */
 function getDefaults() {
     return {
@@ -89,56 +86,27 @@ function getDefaults() {
                 description: 'Watching the sunset together by the ocean. Pure magic.',
                 showYear: true,
                 type: 'trip'
-            },
-            {
-                date: '2024-10-30',
-                title: 'Cozy Fall Evening',
-                description: 'Hot cocoa, blankets, and your favorite movie. Perfect winter night.',
-                showYear: true,
-                type: 'memory'
             }
         ],
         notes: [
-            { date: '2025-12-15', text: 'Plan surprise dinner for anniversary' },
-            { date: '2026-02-14', text: 'Book spa weekend for Valentine\'s Day' },
-            { date: '2026-06-20', text: 'Research summer vacation destinations together' }
+            { date: '2025-12-15', text: 'Plan surprise dinner for anniversary' }
         ],
         photoGallery: [
-            {
-                image: cityImg,
-                caption: "Love Proposal..."
-            },
-            {
-                image: natureImg,
-            },
-            {
-                image: picnicImg,
-                caption: "Sunday Evening..."
-            },
-            {
-                image: aiImg,
-            },
-            {
-                image: ghibliImg,
-            },
-            {
-                image: indianImg,
-            }
+            { image: cityImg, caption: "Love Proposal..." },
+            { image: natureImg }
         ],
         promises: {
             intro: "I'll always be there for you, through every season of life. Here are my promises to you...",
             promises: [
                 'I promise to always make you laugh, even on the hardest days',
-                'I promise to support your dreams and celebrate your victories',
-                'I promise to always choose you, every single day'
+                'I promise to support your dreams and celebrate your victories'
             ]
         },
         loveReasons: {
             intro: "I could list hundreds of reasons why I love you, but here are just a few that make my heart full...",
             reasons: [
                 'The way you care so deeply about everyone around you',
-                'Your adventurous spirit that makes life exciting',
-                'How comfortable I feel being completely myself with you'
+                'Your adventurous spirit that makes life exciting'
             ]
         },
         loveLanguages: {
@@ -153,11 +121,6 @@ function getDefaults() {
                     name: 'Physical Touch',
                     icon: 'fas fa-hand-holding-heart',
                     description: 'Holding hands, warm hugs, and gentle kisses. Physical connection that reminds us we\'re always there for each other.'
-                },
-                {
-                    name: 'Gift Giving',
-                    icon: 'fas fa-gift',
-                    description: 'Thoughtful surprises that show I\'m always thinking of you - from your favorite snack to something that reminded me of us.'
                 }
             ]
         },
@@ -165,57 +128,30 @@ function getDefaults() {
             intro: "The future is bright and full of possibilities. Here's what I'm dreaming of experiencing with you.",
             items: [
                 {
-                    item: 'Go Skydiving',
+                    title: 'Go Skydiving',
                     description: 'Experience the thrill of freefalling together and conquer our fears.',
                     targetDate: '2026-08-15',
                     icon: 'fas fa-parachute-box',
-                    completed: false
-                },
-                {
-                    item: 'Watch Sunrise from a Mountain',
-                    description: 'Hike up early and witness the world wake up from a beautiful peak.',
-                    targetDate: '2024-09-20',
-                    icon: 'fas fa-mountain-sun',
-                    completed: true
-                },
-                {
-                    item: 'Road Trip Across the Country',
-                    description: 'Take a spontaneous adventure with no strict plans, just us and the open road.',
-                    targetDate: '2027-06-01',
-                    icon: 'fas fa-road',
                     completed: false
                 }
             ]
         },
         memoryBook: [
-            { date: '2023-05-14', message: 'Getting caught in the rain and laughing until our sides hurt. Pure joy.', author: 'Him' },
-            { date: '2024-03-17', message: 'Building that bookshelf together and only arguing once. We make a great team!', author: 'Him' },
-            { date: '2024-08-25', message: 'Your face when I told you I love your weird laugh - priceless and adorable.', author: 'Her' }
+            { date: '2023-05-14', message: 'Getting caught in the rain and laughing until our sides hurt. Pure joy.', author: 'Him' }
         ],
         playlist: {
             intro: "Some songs that make me think of you and some are the soundtracks of our love story...",
             songs: [
                 {
-                    title: '',
-                    embedId: 'https://www.youtube.com/watch?v=EmsNH47y7Jo&pp=ygUZYWxsIHRpbWUgbG92ZSBzb25ncyB0YW1pbA%3D%3D',
-                    note: 'Reminds me of our first date'
-                },
-                {
-                    title: 'You are my everything',
-                    embedId: 'https://www.youtube.com/watch?v=_NhwOcq_2Bw&pp=ygUbYWxsIHRpbWUgbG92ZSBzb25ncyBlbmdsaXNo',
-                    note: 'Our song - reminds me of our first dance together'
-                },
-                {
                     title: 'Make You Feel My Love',
-                    artist: 'Adele',
-                    embedId: 'https://www.youtube.com/watch?v=zeVWTY31Vn8&pp=ygUZYWxsIHRpbWUgbG92ZSBzb25ncyBoaW5kaQ%3D%3D',
+                    embedId: 'https://www.youtube.com/watch?v=zeVWTY31Vn8',
                     note: 'I\'d do anything to make you happy'
                 }
             ]
         },
         videoMontage: {
             intro: 'A special clip of our favorite moments together, for the person who means everything to me...',
-            fileId: 'https://www.youtube.com/watch?v=xdHx1YEsWwk&pp=ygUoQ2FydG9vbiByb21hbnRpYyB2aWRlb3MgZm9yIHJlbGF0aW9uc2hpcNIHCQkLCgGHKiGM7w%3D%3D'
+            fileId: 'https://www.youtube.com/watch?v=xdHx1YEsWwk'
         },
         surprise: {
             title: "You're My Everything!",
@@ -225,8 +161,6 @@ function getDefaults() {
         }
     };
 }
-
-
 
 export async function loadData() {
     try {
@@ -279,8 +213,6 @@ export async function loadData() {
         }
 
         siteData.SpouseName = window.SITE_CONFIG?.SpouseName || 'My Love';
-        
-        // FIX: Reset global error on success so saving works again
         globalError = false;
 
     } catch (err) {
@@ -312,7 +244,6 @@ export async function saveData(silent = false, showAlertFn) {
     }
 }
 
-// ... [Rest of data.js functions: addPhoto, updatePhoto, etc. remain same] ...
 export async function resetAllData() {
     try {
         const db = await openDB();
@@ -410,5 +341,3 @@ export async function uploadGenericImage(file) {
         reader.readAsDataURL(compressedFile);
     });
 }
-
-export async function deleteFileFromUrl(url) { return; }
